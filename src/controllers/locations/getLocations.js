@@ -1,10 +1,25 @@
-// GET /api/locations — власник: M4
-// Редагуєш ТІЛЬКИ цей файл (+ свій файл валідації/сервісу). Роутер уже підключений тімлідом.
-// Приклад формату відповіді: res.status(200).json({ data: ... }) або buildPaginatedResponse(...)
-export const getLocations = async (_req, res, next) => {
+import { buildLocationFilter } from '../../services/locations/buildLocationFilter.js';
+import { findLocationsPage } from '../../services/locations/findLocationsPage.js';
+import {
+  buildPaginatedResponse,
+  getPaginationParams,
+} from '../../utils/pagination.js';
+
+export const getLocations = async (req, res, next) => {
   try {
-    // TODO(M4): реалізувати за docs/API_CONTRACT.md
-    res.status(501).json({ status: 501, message: 'Not implemented: GET /api/locations' });
+    const { page, limit, skip } = getPaginationParams(req.query);
+    const filter = buildLocationFilter(req.query);
+    const { items, totalItems } = await findLocationsPage({
+      filter,
+      sort: req.query.sort,
+      order: req.query.order,
+      skip,
+      limit,
+    });
+
+    res
+      .status(200)
+      .json(buildPaginatedResponse({ items, totalItems, page, limit }));
   } catch (error) {
     next(error);
   }

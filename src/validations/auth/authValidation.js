@@ -1,0 +1,17 @@
+import { Joi, Segments } from 'celebrate';
+
+// ТЗ → Validation rules → Registration Form
+export const registerUserSchema = {
+  [Segments.BODY]: Joi.object({
+    name: Joi.string().trim().min(2).max(32).required(),
+    email: Joi.string().trim().lowercase().email().max(64).required(),
+    password: Joi.string().min(8).max(128).required(),
+  }),
+};
+
+export const loginUserSchema = {
+  [Segments.BODY]: Joi.object({
+    email: Joi.string().trim().lowercase().email().required(),
+    password: Joi.string().required(),
+  }),
+};

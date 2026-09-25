@@ -1,44 +1,20 @@
-# Модулі фронтенду (за макетом) і відповідальні
+# Модулі фронтенду і відповідальні
 
-Модуль = окремий компонент у `components/<Name>/<Name>.tsx` + `<Name>.module.css`, у 3 брейкпоінтах
-(mobile 320/375 · tablet 768 · desktop 1440). Мінімум 2 модулі на людину.
+Модуль = `components/<Name>/<Name>.tsx` + `<Name>.module.css`, у 3 брейкпоінтах (320/375 · 768 · 1440). Мінімум 2 на людину.
+Кожен також робить Route Handler у `app/api` для свого бекенд-ендпоінта.
 
-| # | Модуль | Де в макеті | Хто | До 30.09? |
-|---|---|---|---|---|
-| 1 | AuthNav (таби Реєстрація/Вхід) | Вхід, Реєстрація | TL | ✅ |
-| 2 | LoginForm (Formik+Yup, toast на помилку) | Вхід | TL | ✅ |
-| 3 | RegisterForm (ім'я, пошта, пароль) | Реєстрація | TL | ✅ |
-| 4 | Header (гість / авторизований, навігація) | усі сторінки | M1 | ✅ |
-| 5 | UserBar (аватар, ім'я, кнопка виходу) | Header авторизований | M1 | ✅ |
-| 6 | ConfirmLogoutModal «Ви точно хочете вийти?» | Підтвердження виходу | TL | ✅ |
-| 7 | MobileMenu (бургер, на весь екран) | Header tablet/mobile | M2 | ✅ |
-| 8 | ProfileInfo (аватар, ім'я, кількість статей) | Профіль, Публічний профіль | M2 | |
-| 9 | Footer (лого, соцмережі, навігація, динамічний рік) | усі сторінки | M3 | ✅ |
-| 10 | UserLocations (сітка 6/4, «Показати ще», кнопка «Редагувати», placeholder «ще не ділився») | Профіль | M3 | |
-| 11 | FiltersPanel (пошук, регіон, тип, сортування → URL-параметри) | Усі місця | M4 | |
-| 12 | LocationsGrid + «Показати ще» (9 на порцію, автоскрол, loader) | Усі місця | M4 | |
-| 13 | PopularLocations (Swiper, loop, 3/2/1 картки) | Головна | M5 | ✅ |
-| 14 | LatestFeedbacks (Swiper, назва локації під відгуком) | Головна | M5 | ✅ |
-| 15 | FeedbackCard (зірки, текст, автор, локація) | Головна, Локація | M5 | ✅ |
-| 16 | LocationDetails (рейтинг, назва, регіон, тип, автор-посилання, фото, опис) | Локація | M6 | |
-| 17 | LocationFeedbacks (заголовок + «Залишити відгук» + Swiper) | Локація | M6 | |
-| 18 | Hero (заголовок, пошук «назва, тип або регіон» → /locations?search=) | Головна | M7 | ✅ |
-| 19 | LocationForm (фото з прев'ю, назва, тип, регіон, опис; reuse для add/edit, «Відмінити» = reset/відкат) | Створення, Редагування | M7 | |
-| 20 | LocationCard (фото, тип, зірки, назва, «Переглянути локацію», опц. «Редагувати») | Головна, Усі місця, Профіль | M8 | ✅ першим! |
-| 21 | Advantages «Ключові переваги» (статика) | Головна | M8 | ✅ |
-| 22 | EditLocationPage (підвантаження даних у LocationForm) | Редагування | M8 | |
-| 23 | UI kit: Button/LinkButton, Input, Textarea, Select (дропдаун) | усюди | M9 | ✅ першим! |
-| 24 | Loader (сторінки + дані) | усюди | M9 | ✅ |
-| 25 | Modal (база: хрестик, backdrop, Escape, блок скролу) | усі модалки | M10 | ✅ першим! |
-| 26 | AddFeedbackModal (текст + вибір зірок) | Відгук | M10 | |
-| 27 | AuthPromptModal «Помилка під час додавання відгуку» (Увійти / Зареєструватись) | Помилка відгуку | M10 | |
-| 28 | StarRating (показ з половинками + інтерактивний вибір) | картки, відгуки, форма | M10 | ✅ |
+| Хто | Модулі | До 30.09? |
+|---|---|---|
+| **Олександр (TL)** | AuthNav, LoginForm, RegisterForm, ConfirmLogoutModal + структура `app/`, API-шар, приватні роути, шрифти, favicon, CSS-змінні | ✅ |
+| **Валерій** | Header (гість / авторизований), UserBar, MobileMenu (бургер) | ✅ |
+| **Анастасія** | Advantages «Ключові переваги», ProfileInfo | ✅ / — |
+| **Назарій** | Footer, UserLocations (сітка профілю + «Показати ще» + placeholder) | ✅ / — |
+| **Катерина** | FiltersPanel, LocationsGrid «Усі місця відпочинку» | — |
+| **Мирослава** | PopularLocations (Swiper), LatestFeedbacks (Swiper), FeedbackCard | ✅ |
+| **Крістіна** | LocationDetails (сторінка локації), LocationFeedbacks | — |
+| **Вікторія** | Hero (пошук), LocationForm (одна для створення і редагування) | ✅ / — |
+| **Артем** | **LocationCard** (першою!), EditLocationPage | ✅ |
+| **Геннадій** | **UI kit**: Button, Input, Textarea, Select (першим!), Loader | ✅ |
+| **Анна** | **Modal**, **StarRating** (першими!), AddFeedbackModal, AuthPromptModal | ✅ |
 
-**Спільні компоненти першими (день 1–2 фронту):** LocationCard (M8), UI kit (M9), Modal + StarRating (M10) —
-на них спираються решта. Поки їх нема — інші верстають із заглушками й підміняють після мерджу.
-
-**Route handlers (`app/api`):** тімлід наперед створює всі `route.ts` із заглушками (по одній функції на метод). Кожен заповнює тільки свою функцію:
-TL — auth/*; M1 — users/me, feedbacks (GET); M2 — users/[userId]; M3 — users/[userId]/locations; M4 — locations (GET); M5 — locations/popular; M6 — locations/[locationId] (GET); M7 — locations (POST); M8 — locations/[locationId] (PATCH); M9 — categories; M10 — feedbacks (POST).
-
-**TL додатково:** структура `app/`, API-шар (`lib/api`), Zustand authStore, `middleware.ts` (приватні роути),
-збереження авторизації після перезавантаження сторінки, глобальні CSS-змінні, шрифти, favicon.
+Спільні компоненти (LocationCard, UI kit, Modal, StarRating) мерджимо в перші 1–2 дні фронту — на них спираються інші.

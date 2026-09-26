@@ -1,6 +1,7 @@
 export const LOCATION_SORT = Object.freeze({
+  NAME_ASC: 'name',
+  NAME_DESC: '-name',
   RATING: 'rating',
-  POPULAR: 'popular',
 });
 
 export const LOCATION_SORT_ORDER = Object.freeze({

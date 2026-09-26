@@ -1,17 +1,21 @@
 import { Location } from '../../models/location.js';
-import { findPopularLocations } from './findPopularLocations.js';
 import { LOCATION_SORT, LOCATION_SORT_ORDER } from './locationSort.js';
 
-const findRatedLocations = (collection, filter, direction, skip, limit) =>
-  collection
-    .find(filter)
-    .sort({ rate: direction, _id: 1 })
-    .skip(skip)
-    .limit(limit)
-    .toArray();
+// українська локаль, щоб «І», «Ї», «Є» сортувались правильно
+const UK_COLLATION = { locale: 'uk' };
 
-const findUnsortedLocations = (collection, filter, skip, limit) =>
-  collection.find(filter).skip(skip).limit(limit).toArray();
+const getSortStage = (sort, order) => {
+  switch (sort) {
+    case LOCATION_SORT.NAME_ASC:
+      return { name: 1, _id: 1 };
+    case LOCATION_SORT.NAME_DESC:
+      return { name: -1, _id: 1 };
+    case LOCATION_SORT.RATING:
+      return { rate: order === LOCATION_SORT_ORDER.ASC ? 1 : -1, _id: 1 };
+    default:
+      return null; // без sort — порядок як у БД
+  }
+};
 
 export const findLocationsPage = async ({
   filter,
@@ -20,31 +24,16 @@ export const findLocationsPage = async ({
   skip,
   limit,
 }) => {
-  // The shared Location schema is still a placeholder; the native collection
-  // preserves all fields imported from the MongoDB seed documents.
+  // схема Location ще порожня, тому поки читаємо напряму з колекції.
+  // після мерджу моделі перевести на Location.find(filter).lean().
   const collection = Location.collection;
-  const direction = order === LOCATION_SORT_ORDER.ASC ? 1 : -1;
-  let itemsQuery;
+  const sortStage = getSortStage(sort, order);
 
-  switch (sort) {
-    case LOCATION_SORT.POPULAR:
-      itemsQuery = findPopularLocations({ filter, direction, skip, limit });
-      break;
-    case LOCATION_SORT.RATING:
-      itemsQuery = findRatedLocations(
-        collection,
-        filter,
-        direction,
-        skip,
-        limit,
-      );
-      break;
-    default:
-      itemsQuery = findUnsortedLocations(collection, filter, skip, limit);
-  }
+  let cursor = collection.find(filter);
+  if (sortStage) cursor = cursor.sort(sortStage).collation(UK_COLLATION);
 
   const [items, totalItems] = await Promise.all([
-    itemsQuery,
+    cursor.skip(skip).limit(limit).toArray(),
     collection.countDocuments(filter),
   ]);
 

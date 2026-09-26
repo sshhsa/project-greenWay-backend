@@ -1,16 +1,94 @@
 import { Schema, model } from 'mongoose';
 
-// Власник: M7. Налаштувати поля. Специфікація (seed locations.json + ТЗ Validation rules):
-//   name          String, required, trim, 3–96
-//   image         String (URL з Cloudinary), required
-//   locationType  String — SLUG типу (напр. 'more'), required
-//   region        String — SLUG регіону (напр. 'odeshchyna'), required
-//   description   String, required, 20–6000
-//   rate          Number, default: 0 (середнє з відгуків — перераховує M10)
-//   ownerId       ObjectId, ref 'User', required
-//   feedbacksId   [ObjectId], ref 'Feedback', default: []
-//   coordinates   { lat: Number, lon: Number } — НЕ обов'язкове (карта = додаткове завдання)
-// Індекс для пошуку/фільтрів: { name: 'text' } або regex по name; індекси на region, locationType.
-const locationSchema = new Schema({}, { timestamps: true, versionKey: false });
+const locationSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      minlength: 3,
+      maxlength: 96,
+      trim: true,
+    },
+    image: {
+      type: String,
+      required: true,
+    },
+    locationType: {
+      type: String,
+      required: true,
+      maxlength: 64,
+      trim: true,
+    },
+    region: {
+      type: String,
+      required: true,
+      maxlength: 64,
+      trim: true,
+    },
+    description: {
+      type: String,
+      required: true,
+      minlength: 20,
+      maxlength: 6000,
+      trim: true,
+    },
+    rate: {
+      type: Number,
+      min: 0,
+      max: 5,
+      default: 0,
+    },
+    ownerId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    feedbacksId: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Feedback',
+      },
+    ],
+    coordinates: {
+      lat: {
+        type: Number,
+        required: true,
+        min: -90,
+        max: 90,
+      },
+      lon: {
+        type: Number,
+        required: true,
+        min: -180,
+        max: 180,
+      },
+    },
+  },
+  {
+    timestamps: true,
+    toObject: { virtuals: true },
+    toJSON: { virtuals: true },
+    versionKey: false,
+  },
+);
+
+locationSchema.virtual('regionInfo', {
+  ref: 'Region',
+  localField: 'region',
+  foreignField: 'slug',
+  justOne: true,
+});
+
+locationSchema.virtual('locationTypeInfo', {
+  ref: 'LocationType',
+  localField: 'locationType',
+  foreignField: 'slug',
+  justOne: true,
+});
+
+locationSchema.index({ region: 1 });
+locationSchema.index({ locationType: 1 });
+locationSchema.index({ name: 'text' });
+locationSchema.index({ ownerId: 1, region: 1 });
 
 export const Location = model('Location', locationSchema, 'locations');

@@ -1,5 +1,4 @@
 import createHttpError from 'http-errors';
-import fs from 'node:fs/promises';
 import { Location } from '../../models/location.js';
 import { User } from '../../models/user.js';
 import { saveFileToCloudinary } from '../../utils/saveFileToCloudinary.js';
@@ -12,23 +11,18 @@ export const createLocation = async (req, res, next) => {
       throw createHttpError(401, 'Unauthorized: User context is missing');
     }
 
-    if (!file) {
-      throw createHttpError(400, 'Location image is required');
+    const { name, description, coordinates, locationType, region } = body;
+    
+    if (!name?.trim()) {
+      throw createHttpError(400, 'Field name is required');
     }
 
-    const isValidType = ['image/jpeg', 'image/png'].includes(file.mimetype);
-    const isValidSize = file.size <= 1024 * 1024;
-
-    if (!isValidType || !isValidSize) {
-      throw createHttpError(
-        400,
-        'Invalid file format or size. Only JPG/PNG under 1MB allowed.',
-      );
+    if (!locationType?.trim()) {
+      throw createHttpError(400, 'Field locationType is required');
     }
 
-    const { name, description, address, coordinates } = body;
-    if (!name?.trim() || !address?.trim()) {
-      throw createHttpError(400, 'Fields name and address are required');
+    if (!region?.trim()) {
+      throw createHttpError(400, 'Field region is required');
     }
 
     let parsedCoordinates = coordinates;
@@ -43,7 +37,7 @@ export const createLocation = async (req, res, next) => {
       }
     }
 
-    const cloudinaryResult = await saveFileToCloudinary(file);
+    const cloudinaryResult = await saveFileToCloudinary(file.buffer);
     if (!cloudinaryResult?.secure_url) {
       throw createHttpError(500, 'Failed to upload image to Cloudinary');
     }
@@ -51,8 +45,9 @@ export const createLocation = async (req, res, next) => {
     const location = await Location.create({
       name: name.trim(),
       description: description?.trim(),
-      address: address.trim(),
       coordinates: parsedCoordinates,
+      locationType: locationType.trim(), 
+      region: region.trim(),             
       ownerId: user._id,
       image: cloudinaryResult.secure_url,
     });
@@ -61,23 +56,8 @@ export const createLocation = async (req, res, next) => {
       $inc: { articlesAmount: 1 },
     });
 
-    res.status(201).json({
-      status: 201,
-      message: 'Location created successfully',
-      data: location,
-    });
+    return res.status(201).json({ data: location });
   } catch (error) {
     next(error);
-  } finally {
-    if (file?.path) {
-      try {
-        await fs.unlink(file.path);
-      } catch (unlinkError) {
-        console.error(
-          `Failed to delete temporary file: ${file.path}`,
-          unlinkError,
-        );
-      }
-    }
   }
 };

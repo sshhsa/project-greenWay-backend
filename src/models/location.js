@@ -91,4 +91,4 @@ locationSchema.index({ locationType: 1 });
 locationSchema.index({ name: 'text' });
 locationSchema.index({ ownerId: 1, region: 1 });
 
-export const Location = model('location', locationSchema, 'locations');
+export const Location = model('Location', locationSchema, 'locations');

@@ -9,7 +9,7 @@
 | Хто | Ендпоінт | Твої файли | Скл. |
 |---|---|---|---|
 | **Олександр (TL)** | Каркас · register · login · logout · refresh · authenticate · isValidId · seed | спільні файли, `models/user.js`, `models/session.js`, `controllers/auth/*` | ✅ готово |
-| **Валерій** (ValeriySolod) | GET /users/me · GET /feedbacks (останні) | `controllers/users/getCurrentUser.js`, `controllers/feedbacks/getLatestFeedbacks.js`, `validations/feedbacks/getLatestFeedbacksSchema.js` | 🟢🟢 |
+| **Валерій** (ValeriySolod) | POST /feedbacks + **схема Feedback** + push у location + перерахунок rate | `models/feedback.js`, `controllers/feedbacks/createFeedback.js`, `validations/feedbacks/createFeedbackSchema.js` | 🔴 |
 | **Анастасія** (Scrum) | GET /users/:userId | `controllers/users/getUserById.js` | 🟢 |
 | **Назарій** | GET /users/:userId/locations | `controllers/users/getUserLocations.js`, `validations/users/getUserLocationsSchema.js` | 🟡 |
 | **Катерина** | GET /locations (пагінація, region, type, search, sort) | `controllers/locations/getLocations.js`, `validations/locations/getLocationsSchema.js` | 🔴 |
@@ -18,11 +18,11 @@
 | **Вікторія** | POST /locations + **схема Location** + Cloudinary + articlesAmount +1 | `models/location.js`, `controllers/locations/createLocation.js`, `validations/locations/createLocationSchema.js` | 🔴 |
 | **Артем** | PATCH /locations/:locationId (лише автор → 403) | `controllers/locations/updateLocation.js`, `validations/locations/updateLocationSchema.js` | 🔴 |
 | **Геннадій** | GET /categories + **схеми Region, LocationType** | `models/region.js`, `models/locationType.js`, `controllers/categories/getCategories.js` | 🟡 |
-| **Анна** | POST /feedbacks + **схема Feedback** + перерахунок rate | `models/feedback.js`, `controllers/feedbacks/createFeedback.js`, `validations/feedbacks/createFeedbackSchema.js` | 🔴 |
+| **Анна** | GET /users/me · GET /feedbacks (останні) | `controllers/users/getCurrentUser.js`, `controllers/feedbacks/getLatestFeedbacks.js`, `validations/feedbacks/getLatestFeedbacksSchema.js` | 🟢🟢 |
 
 ## Порядок
 - Дані вже в БД → усі GET-и стартують одразу.
-- Схеми Вікторії, Геннадія й Анни — змерджити **першими** (день 1), інші їх лише імпортують.
+- Схеми Вікторії, Геннадія й Валерія — змерджити **першими** (день 1), інші їх лише імпортують.
 - Артем стартує після мерджу схеми Location.
 - Приватні ендпоінти тестуємо так: Postman → `POST /api/auth/login` з `test@greenway.dev` / `Test12345` → cookies зберігаються → твій запит.
 

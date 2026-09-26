@@ -12,6 +12,8 @@ cp .env.template .env  # заповнити MONGO_URL та інші змінні
 npm run dev            # http://localhost:4000/api/health
 ```
 
+Якщо на Windows `mongodb+srv` завершується з `querySrv ECONNREFUSED`, а `node -e "console.log(require('node:dns').getServers())"` показує `127.0.0.1`, задай `MONGO_DNS_SERVER=1.1.1.1` у `.env`. Ця змінна перевизначає DNS-сервер лише для процесу Node.js; без неї використовується системне налаштування.
+
 ## Скрипти
 | Команда | Що робить |
 |---|---|

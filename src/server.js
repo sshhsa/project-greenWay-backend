@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import dns from 'dns';
 
 import { connectMongoDB } from './db/connectMongoDB.js';
 import { logger } from './middleware/logger.js';
@@ -41,6 +42,8 @@ app.use('/api', apiRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
+
+dns.setServers(['1.1.1.1', '8.8.8.8']);
 
 await connectMongoDB();
 

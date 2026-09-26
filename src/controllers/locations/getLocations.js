@@ -4,7 +4,9 @@
 export const getLocations = async (_req, res, next) => {
   try {
     // TODO(M4): реалізувати за docs/API_CONTRACT.md
-    res.status(501).json({ status: 501, message: 'Not implemented: GET /api/locations' });
+    res
+      .status(501)
+      .json({ status: 501, message: 'Not implemented: GET /api/locations' });
   } catch (error) {
     next(error);
   }

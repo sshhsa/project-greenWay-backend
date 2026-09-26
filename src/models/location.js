@@ -11,6 +11,7 @@ import { Schema, model } from 'mongoose';
 //   feedbacksId   [ObjectId], ref 'Feedback', default: []
 //   coordinates   { lat: Number, lon: Number } — НЕ обов'язкове (карта = додаткове завдання)
 // Індекс для пошуку/фільтрів: { name: 'text' } або regex по name; індекси на region, locationType.
+
 const locationSchema = new Schema({}, { timestamps: true, versionKey: false });
 
 export const Location = model('Location', locationSchema, 'locations');

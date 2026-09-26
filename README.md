@@ -12,6 +12,8 @@ cp .env.template .env  # заповнити MONGO_URL та інші змінні
 npm run dev            # http://localhost:4000/api/health
 ```
 
+Якщо на Windows підключення `mongodb+srv` завершується помилкою `querySrv ECONNREFUSED` або `querySrv ETIMEOUT`, перевір DNS через `node -e "console.log(require('node:dns').getServers())"`. Якщо Node використовує недоступний DNS (наприклад, `127.0.0.1`), задай доступний сервер у `.env`: `MONGO_DNS_SERVER=1.1.1.1`. Налаштування застосовується до DNS-запитів процесу Node перед підключенням до MongoDB; порожнє або відсутнє значення зберігає системний DNS. Налаштування Windows не змінюється.
+
 ## Скрипти
 | Команда | Що робить |
 |---|---|

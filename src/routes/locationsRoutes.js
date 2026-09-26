@@ -18,7 +18,11 @@ import { updateLocationSchema } from '../validations/locations/updateLocationSch
 const router = Router();
 
 router.get('/', celebrate(getLocationsSchema), getLocations); // M4
-router.get('/popular', celebrate(getPopularLocationsSchema), getPopularLocations); // M5 (вище за /:locationId!)
+router.get(
+  '/popular',
+  celebrate(getPopularLocationsSchema),
+  getPopularLocations,
+); // M5 (вище за /:locationId!)
 router.get('/:locationId', isValidId('locationId'), getLocationById); // M6
 router.post(
   '/',

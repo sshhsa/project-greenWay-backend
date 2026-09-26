@@ -4,7 +4,10 @@
 export const getPopularLocations = async (_req, res, next) => {
   try {
     // TODO(M5): реалізувати за docs/API_CONTRACT.md
-    res.status(501).json({ status: 501, message: 'Not implemented: GET /api/locations/popular' });
+    res.status(501).json({
+      status: 501,
+      message: 'Not implemented: GET /api/locations/popular',
+    });
   } catch (error) {
     next(error);
   }

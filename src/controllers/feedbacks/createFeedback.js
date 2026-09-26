@@ -4,7 +4,9 @@
 export const createFeedback = async (_req, res, next) => {
   try {
     // TODO(M10): реалізувати за docs/API_CONTRACT.md
-    res.status(501).json({ status: 501, message: 'Not implemented: POST /api/feedbacks' });
+    res
+      .status(501)
+      .json({ status: 501, message: 'Not implemented: POST /api/feedbacks' });
   } catch (error) {
     next(error);
   }

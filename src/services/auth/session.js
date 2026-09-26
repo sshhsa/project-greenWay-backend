@@ -22,9 +22,18 @@ export const createSession = (userId) =>
   });
 
 export const setSessionCookies = (res, session) => {
-  res.cookie('accessToken', session.accessToken, { ...cookieOptions, maxAge: FIFTEEN_MINUTES });
-  res.cookie('refreshToken', session.refreshToken, { ...cookieOptions, maxAge: ONE_DAY });
-  res.cookie('sessionId', session._id.toString(), { ...cookieOptions, maxAge: ONE_DAY });
+  res.cookie('accessToken', session.accessToken, {
+    ...cookieOptions,
+    maxAge: FIFTEEN_MINUTES,
+  });
+  res.cookie('refreshToken', session.refreshToken, {
+    ...cookieOptions,
+    maxAge: ONE_DAY,
+  });
+  res.cookie('sessionId', session._id.toString(), {
+    ...cookieOptions,
+    maxAge: ONE_DAY,
+  });
 };
 
 export const clearSessionCookies = (res) => {

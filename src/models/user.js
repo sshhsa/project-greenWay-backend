@@ -4,7 +4,13 @@ import { Schema, model } from 'mongoose';
 // Для нових користувачів обов'язковість гарантує валідація реєстрації (celebrate).
 const userSchema = new Schema(
   {
-    name: { type: String, required: true, trim: true, minlength: 2, maxlength: 32 },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 2,
+      maxlength: 32,
+    },
     email: {
       type: String,
       unique: true,

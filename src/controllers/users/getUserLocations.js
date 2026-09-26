@@ -4,7 +4,10 @@
 export const getUserLocations = async (_req, res, next) => {
   try {
     // TODO(M3): реалізувати за docs/API_CONTRACT.md
-    res.status(501).json({ status: 501, message: 'Not implemented: GET /api/users/:userId/locations' });
+    res.status(501).json({
+      status: 501,
+      message: 'Not implemented: GET /api/users/:userId/locations',
+    });
   } catch (error) {
     next(error);
   }

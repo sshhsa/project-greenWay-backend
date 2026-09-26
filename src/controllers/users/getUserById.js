@@ -4,7 +4,10 @@
 export const getUserById = async (_req, res, next) => {
   try {
     // TODO(M2): реалізувати за docs/API_CONTRACT.md
-    res.status(501).json({ status: 501, message: 'Not implemented: GET /api/users/:userId' });
+    res.status(501).json({
+      status: 501,
+      message: 'Not implemented: GET /api/users/:userId',
+    });
   } catch (error) {
     next(error);
   }

@@ -1,15 +1,19 @@
-// GET /api/users/:userId — власник: M2
-// Редагуєш ТІЛЬКИ цей файл (+ свій файл валідації/сервісу). Роутер уже підключений тімлідом.
-// Приклад формату відповіді: res.status(200).json({ data: ... }) або buildPaginatedResponse(...)
-export const getUserById = async (_req, res, next) => {
+import createHttpError from 'http-errors';
+import { User } from '../../models/user.js';
+
+export const getUserById = async (req, res, next) => {
   try {
-    // TODO(M2): реалізувати за docs/API_CONTRACT.md
-    res
-      .status(501)
-      .json({
-        status: 501,
-        message: 'Not implemented: GET /api/users/:userId',
-      });
+    const { userId } = req.params;
+
+    const user = await User.findById(userId).select(
+      'name avatarUrl articlesAmount',
+    );
+
+    if (!user) {
+      throw createHttpError(404, 'User not found');
+    }
+
+    res.status(200).json({ data: user });
   } catch (error) {
     next(error);
   }

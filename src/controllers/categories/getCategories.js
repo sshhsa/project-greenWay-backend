@@ -4,7 +4,9 @@
 export const getCategories = async (_req, res, next) => {
   try {
     // TODO(M9): реалізувати за docs/API_CONTRACT.md
-    res.status(501).json({ status: 501, message: 'Not implemented: GET /api/categories' });
+    res
+      .status(501)
+      .json({ status: 501, message: 'Not implemented: GET /api/categories' });
   } catch (error) {
     next(error);
   }

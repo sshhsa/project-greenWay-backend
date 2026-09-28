@@ -2,7 +2,10 @@ import bcrypt from 'bcrypt';
 import createHttpError from 'http-errors';
 
 import { User } from '../../models/user.js';
-import { createSession, setSessionCookies } from '../../services/auth/session.js';
+import {
+  createSession,
+  setSessionCookies,
+} from '../../services/auth/session.js';
 
 // POST /api/auth/register — public. Після реєстрації користувач одразу авторизований.
 export const registerUser = async (req, res, next) => {

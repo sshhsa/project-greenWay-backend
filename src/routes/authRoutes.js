@@ -5,7 +5,10 @@ import { registerUser } from '../controllers/auth/registerUser.js';
 import { loginUser } from '../controllers/auth/loginUser.js';
 import { logoutUser } from '../controllers/auth/logoutUser.js';
 import { refreshSession } from '../controllers/auth/refreshSession.js';
-import { registerUserSchema, loginUserSchema } from '../validations/auth/authValidation.js';
+import {
+  registerUserSchema,
+  loginUserSchema,
+} from '../validations/auth/authValidation.js';
 
 // Базовий шлях: /api/auth — повністю тімлід
 const router = Router();

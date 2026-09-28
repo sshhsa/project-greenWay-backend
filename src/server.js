@@ -8,6 +8,7 @@ import { connectMongoDB } from './db/connectMongoDB.js';
 import { logger } from './middleware/logger.js';
 import { notFoundHandler } from './middleware/notFoundHandler.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import docsRouter from './routes/docsRoutes.js';
 import apiRouter from './routes/index.js';
 
 const app = express();
@@ -32,6 +33,7 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+app.use('/docs', docsRouter);
 
 app.get('/api/health', (_req, res) => {
   res.status(200).json({ data: { status: 'ok' } });

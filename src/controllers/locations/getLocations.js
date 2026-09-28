@@ -12,7 +12,6 @@ export const getLocations = async (req, res, next) => {
     const { items, totalItems } = await findLocationsPage({
       filter,
       sort: req.query.sort,
-      order: req.query.order,
       skip,
       limit,
     });

@@ -1,11 +1,26 @@
 import { Schema, model } from 'mongoose';
 
-// Власник: M10. Налаштувати поля. Специфікація (seed feedbacks.json + рішення ментора):
-//   rate         Number, required, 1–5
-//   description  String, required, 1–200
-//   userName     String, required, 2–32 (береться з req.user.name, не з форми)
-//   locationId   ObjectId, ref 'Location' — у seed-відгуків його НЕМАЄ,
-//                тому не required на рівні схеми (для нових відгуків — обов'язковий у валідації)
-const feedbackSchema = new Schema({}, { timestamps: true, versionKey: false });
+const feedbackSchema = new Schema(
+  {
+    rate: { type: Number, required: true, min: 1, max: 5 },
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 1,
+      maxlength: 200,
+    },
+    userName: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 2,
+      maxlength: 32,
+    },
+    // у seed-відгуків locationId немає, тому не required
+    locationId: { type: Schema.Types.ObjectId, ref: 'Location' },
+  },
+  { timestamps: true, versionKey: false },
+);
 
 export const Feedback = model('Feedback', feedbackSchema, 'feedbacks');

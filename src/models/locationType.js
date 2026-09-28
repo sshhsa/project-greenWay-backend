@@ -1,9 +1,21 @@
 import { Schema, model } from 'mongoose';
 
-// Власник: M9. Довідник (тільки читання). Поля з seed location_types.json:
-//   type String, slug String (unique), shortDescription String
 const locationTypeSchema = new Schema(
-  {},
+  {
+    type: {
+      type: String,
+      required: true,
+    },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    shortDescription: {
+      type: String,
+      required: true,
+    },
+  },
   { timestamps: true, versionKey: false },
 );
 

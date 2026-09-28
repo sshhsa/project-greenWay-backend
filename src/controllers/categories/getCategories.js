@@ -1,12 +1,19 @@
-// GET /api/categories — власник: M9
-// Редагуєш ТІЛЬКИ цей файл (+ свій файл валідації/сервісу). Роутер уже підключений тімлідом.
-// Приклад формату відповіді: res.status(200).json({ data: ... }) або buildPaginatedResponse(...)
+import { Region } from '../../models/region.js';
+import { LocationType } from '../../models/locationType.js';
+
 export const getCategories = async (_req, res, next) => {
   try {
-    // TODO(M9): реалізувати за docs/API_CONTRACT.md
-    res
-      .status(501)
-      .json({ status: 501, message: 'Not implemented: GET /api/categories' });
+    const [regions, locationTypes] = await Promise.all([
+      Region.find().lean(),
+      LocationType.find().lean(),
+    ]);
+
+    res.status(200).json({
+      data: {
+        regions,
+        locationTypes,
+      },
+    });
   } catch (error) {
     next(error);
   }

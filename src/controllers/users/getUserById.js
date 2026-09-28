@@ -5,7 +5,9 @@ export const getUserById = async (req, res, next) => {
   try {
     const { userId } = req.params;
 
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select(
+      'name avatarUrl articlesAmount',
+    );
 
     if (!user) {
       throw createHttpError(404, 'User not found');

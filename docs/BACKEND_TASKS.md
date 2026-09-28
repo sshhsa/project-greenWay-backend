@@ -9,7 +9,7 @@
 | Хто | Ендпоінт | Твої файли | Скл. |
 |---|---|---|---|
 | **Олександр (TL)** | Каркас · register · login · logout · refresh · authenticate · isValidId · seed | спільні файли, `models/user.js`, `models/session.js`, `controllers/auth/*` | ✅ готово |
-| **Валерій** (ValeriySolod) | POST /feedbacks + **схема Feedback** + push у location + перерахунок rate | `models/feedback.js`, `controllers/feedbacks/createFeedback.js`, `validations/feedbacks/createFeedbackSchema.js` | 🔴 |
+| **Валерій** (ValeriySolod) | GET /users/me · GET /feedbacks (останні) | `controllers/users/getCurrentUser.js`, `controllers/feedbacks/getLatestFeedbacks.js`, `validations/feedbacks/getLatestFeedbacksSchema.js` | ✅ #22 |
 | **Анастасія** (Scrum) | GET /users/:userId | `controllers/users/getUserById.js` | 🟢 |
 | **Назарій** | GET /users/:userId/locations | `controllers/users/getUserLocations.js`, `validations/users/getUserLocationsSchema.js` | 🟡 |
 | **Катерина** | GET /locations (пагінація, region, type, search, sort) | `controllers/locations/getLocations.js`, `validations/locations/getLocationsSchema.js` | 🔴 |
@@ -18,7 +18,14 @@
 | **Вікторія** | POST /locations + **схема Location** + Cloudinary + articlesAmount +1 | `models/location.js`, `controllers/locations/createLocation.js`, `validations/locations/createLocationSchema.js` | 🔴 |
 | **Артем** | PATCH /locations/:locationId (лише автор → 403) | `controllers/locations/updateLocation.js`, `validations/locations/updateLocationSchema.js` | 🔴 |
 | **Геннадій** | GET /categories + **схеми Region, LocationType** | `models/region.js`, `models/locationType.js`, `controllers/categories/getCategories.js` | 🟡 |
-| **Анна** | GET /users/me · GET /feedbacks (останні) | `controllers/users/getCurrentUser.js`, `controllers/feedbacks/getLatestFeedbacks.js`, `validations/feedbacks/getLatestFeedbacksSchema.js` | 🟢🟢 |
+| **Анна** | POST /feedbacks + push у location + перерахунок rate (схема Feedback вже в main) | `controllers/feedbacks/createFeedback.js`, `validations/feedbacks/createFeedbackSchema.js` | ⏳ |
+| **Маркіян** (eture4ka) | ➕ EXTRA: PATCH /users/me — ім'я + аватар | `controllers/users/updateCurrentUser.js`, `validations/users/updateCurrentUserSchema.js` | ✅ #28 |
+
+### Додаткові завдання
+| Хто | Що | Статус |
+|---|---|---|
+| **Маркіян** | PATCH /api/users/me (редагування профілю) | ✅ #28 |
+| **Катерина** | Swagger UI на `/docs/` (поки лише GET /api/locations) | ✅ #29 |
 
 ## Порядок
 - Дані вже в БД → усі GET-и стартують одразу.

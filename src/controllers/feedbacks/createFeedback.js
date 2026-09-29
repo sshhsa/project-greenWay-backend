@@ -1,12 +1,39 @@
-// POST /api/feedbacks — власник: M10
-// Редагуєш ТІЛЬКИ цей файл (+ свій файл валідації/сервісу). Роутер уже підключений тімлідом.
-// Приклад формату відповіді: res.status(200).json({ data: ... }) або buildPaginatedResponse(...)
-export const createFeedback = async (_req, res, next) => {
+import createHttpError from 'http-errors';
+
+import { Feedback } from '../../models/feedback.js';
+import { Location } from '../../models/location.js';
+
+export const createFeedback = async (req, res, next) => {
   try {
-    // TODO(M10): реалізувати за docs/API_CONTRACT.md
-    res
-      .status(501)
-      .json({ status: 501, message: 'Not implemented: POST /api/feedbacks' });
+    const { locationId, rate, description } = req.body;
+
+    const location = await Location.findById(locationId);
+
+    if (!location) {
+      throw createHttpError(404, 'Location not found');
+    }
+
+    const feedback = await Feedback.create({
+      locationId,
+      rate,
+      description,
+      userName: req.user.name,
+    });
+
+    location.feedbacksId.push(feedback._id);
+
+    const feedbacks = await Feedback.find({
+      _id: { $in: location.feedbacksId },
+    }).select('rate');
+
+    const averageRate =
+      feedbacks.reduce((sum, item) => sum + item.rate, 0) / feedbacks.length;
+
+    location.rate = Math.round(averageRate * 2) / 2;
+
+    await location.save();
+
+    return res.status(201).json({ data: feedback });
   } catch (error) {
     next(error);
   }

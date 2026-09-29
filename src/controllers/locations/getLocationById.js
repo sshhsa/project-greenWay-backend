@@ -3,20 +3,18 @@
 // Приклад формату відповіді: res.status(200).json({ data: ... }) або buildPaginatedResponse(...)
 
 import { Location } from '../../models/location.js';
+import createHttpError from 'http-errors';
 
 export const getLocationById = async (req, res, next) => {
   try {
     const { locationId } = req.params;
 
     const location = await Location.findById(locationId)
-      .populate('ownerId')
+      .populate('ownerId', 'name avatarUrl')
       .populate('feedbacksId');
 
     if (!location) {
-      return res.status(501).json({
-        status: 501,
-        message: 'Not implemented: GET /api/locations/:locationId',
-      });
+      throw createHttpError(404, 'Location not found');
     }
     res.status(200).json({ data: location });
   } catch (error) {

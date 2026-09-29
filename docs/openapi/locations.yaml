@@ -1,0 +1,212 @@
+openapi: 3.0.3
+info:
+  title: Greenway — каталог місць відпочинку
+  version: 1.0.0
+  description: Документація лише для публічного ендпоінта GET /api/locations.
+servers:
+  - url: /
+    description: Той самий сервер, що віддає документацію
+tags:
+  - name: Locations
+    description: Каталог місць відпочинку
+paths:
+  /api/locations:
+    get:
+      tags:
+        - Locations
+      operationId: getLocations
+      summary: Отримати список місць відпочинку
+      description: >-
+        Повертає сторінку локацій. Фільтри та пошук можна поєднувати.
+        Пошук виконується за назвою без урахування регістру.
+        Без параметра sort використовується поточний порядок колекції.
+      parameters:
+        - name: page
+          in: query
+          description: Номер сторінки.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: limit
+          in: query
+          description: Кількість локацій на сторінці.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          example: 10
+        - name: region
+          in: query
+          description: Slug регіону.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 96
+          example: odeshchyna
+        - name: type
+          in: query
+          description: Slug типу локації.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 96
+          example: more
+        - name: search
+          in: query
+          description: Частина назви локації.
+          schema:
+            type: string
+            maxLength: 96
+          example: Вертеба
+        - name: sort
+          in: query
+          description: >-
+            name — назва за зростанням; -name — за спаданням;
+            rating — рейтинг за зростанням; -rating — за спаданням.
+          schema:
+            type: string
+            enum:
+              - name
+              - '-name'
+              - rating
+              - '-rating'
+          example: '-rating'
+      responses:
+        '200':
+          description: Сторінка локацій.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationsPage'
+              example:
+                page: 1
+                limit: 10
+                totalItems: 90
+                totalPages: 9
+                items:
+                  - _id: 68d568270e6bcc357e9833e8
+                    image: https://ftp.goit.study/img/relax-map/68d568270e6bcc357e9833e8.webp
+                    name: Сонячна Рів'єра
+                    locationType: more
+                    region: chornomorske-uzberezhzhya
+                    rate: 4.5
+                    description: Місце для відпочинку на узбережжі.
+                    coordinates:
+                      lat: 46.0263
+                      lon: 30.4577
+                    ownerId: 6881563901add19ee16fcff5
+                    feedbacksId:
+                      - 65f1a2b3c4d5e6f7a8b9c001
+                      - 65f1a2b3c4d5e6f7a8b9c002
+        '400':
+          description: Некоректні query-параметри.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              example:
+                status: 400
+                message: '"sort" must be one of [name, -name, rating, -rating]'
+        '500':
+          description: Внутрішня помилка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              example:
+                status: 500
+                message: Internal server error
+components:
+  schemas:
+    LocationsPage:
+      type: object
+      required:
+        - page
+        - limit
+        - totalItems
+        - totalPages
+        - items
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 50
+        totalItems:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationListItem'
+    LocationListItem:
+      type: object
+      description: Поля документа Location, які зараз повертає каталог.
+      required:
+        - _id
+        - name
+        - image
+        - locationType
+        - region
+        - rate
+        - description
+        - ownerId
+        - feedbacksId
+      properties:
+        _id:
+          type: string
+          description: MongoDB ObjectId локації.
+        image:
+          type: string
+          format: uri
+        name:
+          type: string
+        locationType:
+          type: string
+          description: Slug типу локації.
+        region:
+          type: string
+          description: Slug регіону.
+        rate:
+          type: number
+          minimum: 0
+          maximum: 5
+        description:
+          type: string
+        coordinates:
+          type: object
+          description: Координати, якщо вони є в документі.
+          required:
+            - lat
+            - lon
+          properties:
+            lat:
+              type: number
+            lon:
+              type: number
+        ownerId:
+          type: string
+          description: MongoDB ObjectId автора.
+        feedbacksId:
+          type: array
+          items:
+            type: string
+            description: MongoDB ObjectId відгуку.
+    ApiError:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: integer
+        message:
+          type: string

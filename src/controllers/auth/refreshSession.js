@@ -11,7 +11,8 @@ import {
 export const refreshSession = async (req, res, next) => {
   try {
     const { sessionId, refreshToken } = req.cookies;
-    if (!sessionId || !refreshToken) throw createHttpError(401, 'Missing session credentials');
+    if (!sessionId || !refreshToken)
+      throw createHttpError(401, 'Missing session credentials');
 
     const session = await Session.findOne({ _id: sessionId, refreshToken });
     if (!session) throw createHttpError(401, 'Session not found');

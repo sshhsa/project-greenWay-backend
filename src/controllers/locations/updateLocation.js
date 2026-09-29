@@ -4,7 +4,10 @@
 export const updateLocation = async (_req, res, next) => {
   try {
     // TODO(M8): реалізувати за docs/API_CONTRACT.md
-    res.status(501).json({ status: 501, message: 'Not implemented: PATCH /api/locations/:locationId' });
+    res.status(501).json({
+      status: 501,
+      message: 'Not implemented: PATCH /api/locations/:locationId',
+    });
   } catch (error) {
     next(error);
   }

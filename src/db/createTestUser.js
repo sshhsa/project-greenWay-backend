@@ -19,7 +19,10 @@ const run = async () => {
   if (exists) {
     console.log(`ℹ️  ${TEST_USER.email} вже існує`);
   } else {
-    await User.create({ ...TEST_USER, password: await bcrypt.hash(TEST_USER.password, 10) });
+    await User.create({
+      ...TEST_USER,
+      password: await bcrypt.hash(TEST_USER.password, 10),
+    });
     console.log(`✅ Створено ${TEST_USER.email} / ${TEST_USER.password}`);
   }
   await mongoose.disconnect();

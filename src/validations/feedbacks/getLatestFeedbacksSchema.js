@@ -1,7 +1,8 @@
 import { Joi, Segments } from 'celebrate';
 
-// Власник: M1. Поки це заглушка, яка пропускає все. Заміни на реальні правила:
-// limit (int 1–20, default 6)
 export const getLatestFeedbacksSchema = {
-  [Segments.QUERY]: Joi.object().unknown(true),
+  [Segments.QUERY]: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(50).default(6),
+  }),
 };

@@ -1,12 +1,13 @@
-// GET /api/locations/popular — власник: M5
-// Редагуєш ТІЛЬКИ цей файл (+ свій файл валідації/сервісу). Роутер уже підключений тімлідом.
-// Приклад формату відповіді: res.status(200).json({ data: ... }) або buildPaginatedResponse(...)
-export const getPopularLocations = async (_req, res, next) => {
+import { Location } from '../../models/location.js';
+
+export const getPopularLocations = async (req, res, next) => {
   try {
-    // TODO(M5): реалізувати за docs/API_CONTRACT.md
-    res.status(501).json({
-      status: 501,
-      message: 'Not implemented: GET /api/locations/popular',
+    const { limit } = req.query;
+
+    const locations = await Location.find().sort({ rate: -1 }).limit(limit);
+
+    res.status(200).json({
+      data: locations,
     });
   } catch (error) {
     next(error);

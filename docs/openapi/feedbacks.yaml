@@ -1,8 +1,151 @@
-# Власник: Вікторія (#44) — заміни заготовку повною документацією (зразок: locations.yaml)
 openapi: 3.0.3
 info:
   title: Greenway — Feedbacks
   version: 1.0.0
 servers:
   - url: /
-paths: {}
+paths:
+  /api/feedbacks:
+    get:
+      summary: Отримання списку відгуків
+      description: Повертає список відгуків із можливістю пагінації (limit) та розширення зв'язків (populate).
+      parameters:
+        - name: limit
+          in: query
+          description: Обмеження кількості результатів
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            example: 10
+        - name: populate
+          in: query
+          description: Розширення зв'язків у базі даних
+          required: false
+          schema:
+            type: string
+            enum: [locationId]
+            example: locationId
+      responses:
+        '200':
+          description: Успішне отримання списку відгуків
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FeedbackResponse'
+    post:
+      summary: Створення нового відгуку
+      description: Додає новий відгук, прив'язує його до локації, автоматично підтягує ім'я користувача з сесії та перераховує середній рейтинг локації.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - locationId
+                - rate
+                - description
+              properties:
+                locationId:
+                  type: string
+                  description: Ідентифікатор локації (MongoDB ObjectId)
+                  example: "64f1a2b3c4d5e6f7a8b9c0d2"
+                rate:
+                  type: integer
+                  description: Оцінка від 1 до 5
+                  minimum: 1
+                  maximum: 5
+                  example: 5
+                description:
+                  type: string
+                  description: Текст відгуку (від 1 до 200 символів)
+                  minLength: 1
+                  maxLength: 200
+                  example: "Чудове місце для відпочинку всією родиною!"
+                private:
+                  type: boolean
+                  description: Статус приватності відгуку
+                  example: false
+      responses:
+        '201':
+          description: Відгук успішно створено
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FeedbackResponse'
+        '404':
+          description: Локацію з вказаним locationId не знайдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 404
+                  message:
+                    type: string
+                    example: "Location not found"
+
+components:
+  schemas:
+    FeedbackResponse:
+      type: object
+      required:
+        - _id
+        - rate
+        - description
+        - userName
+        - createdAt
+        - updatedAt
+      properties:
+        _id:
+          type: string
+          description: Системний ідентифікатор відгуку в MongoDB
+          example: "64f1a2b3c4d5e6f7a8b9c0d1"
+        rate:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        description:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: "Чудове місце для відпочинку всією родиною!"
+        userName:
+          type: string
+          minLength: 2
+          maxLength: 32
+          description: Ім'я користувача (автоматично підтягується з req.user.name)
+          example: "Вікторія"
+        locationId:
+          type: string
+          description: Ідентифікатор локації (може бути відсутній у seed-відгуків)
+          example: "64f1a2b3c4d5e6f7a8b9c0d2"
+        private:
+          type: boolean
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          description: Дата і час створення документа
+          example: "2026-10-04T23:11:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Дата і час останнього оновлення документа
+          example: "2026-10-04T23:15:00Z"

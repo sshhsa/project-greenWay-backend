@@ -1,8 +1,79 @@
-# Власник: Вікторія (#44) — заміни заготовку повною документацією (зразок: locations.yaml)
 openapi: 3.0.3
 info:
   title: Greenway — Categories
   version: 1.0.0
 servers:
   - url: /
-paths: {}
+paths:
+  /api/categories:
+    get:
+      summary: Отримання категорій (регіонів та типів локацій)
+      description: Повертає повні списки доступних регіонів та типів локацій з бази даних, загорнуті в об'єкт data.
+      responses:
+        '200':
+          description: Успішне отримання списку категорій
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - regions
+                      - locationTypes
+                    properties:
+                      regions:
+                        type: array
+                        description: Масив усіх регіонів з бази даних
+                        items:
+                          $ref: '#/components/schemas/Region'
+                      locationTypes:
+                        type: array
+                        description: Масив усіх типів локацій з бази даних
+                        items:
+                          $ref: '#/components/schemas/LocationType'
+
+components:
+  schemas:
+    Region:
+      type: object
+      required:
+        - _id
+        - region
+        - slug
+      properties:
+        _id:
+          type: string
+          description: Системний ідентифікатор MongoDB
+          example: "64f1a2b3c4d5e6f7a8b9c0f1"
+        region:
+          type: string
+          description: Назва регіону
+          example: "Карпати"
+        slug:
+          type: string
+          description: URL-безпечний аліас регіону
+          example: "karpaty"
+
+    LocationType:
+      type: object
+      required:
+        - _id
+        - type
+        - slug
+      properties:
+        _id:
+          type: string
+          description: Системний ідентифікатор MongoDB
+          example: "64f1a2b3c4d5e6f7a8b9c0f2"
+        type:
+          type: string
+          description: Назва типу локації
+          example: "Водоспад"
+        slug:
+          type: string
+          description: URL-безпечний аліас типу локації
+          example: "vodospad"

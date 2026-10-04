@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.js\"",
     "seed": "node src/db/seed.js",
-    "seed:user": "node src/db/createTestUser.js"
+    "seed:user": "node src/db/createTestUser.js",
+    "seed:coords": "node src/db/addCoordinates.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

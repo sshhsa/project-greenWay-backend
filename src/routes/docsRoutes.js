@@ -12,9 +12,11 @@ router.get('/swagger-initializer.js', (_req, res) => {
   res.sendFile(path.resolve(__dirname, '../swagger-initializer.js'));
 });
 
-router.get('/locations.yaml', (_req, res) => {
-  res.sendFile(path.resolve(__dirname, '../../docs/openapi/locations.yaml'));
-});
+// усі специфікації: docs/openapi/*.yaml → /docs/openapi/<file>.yaml
+router.use(
+  '/openapi',
+  express.static(path.resolve(__dirname, '../../docs/openapi')),
+);
 
 router.use(express.static(swaggerUiDist.getAbsoluteFSPath()));
 

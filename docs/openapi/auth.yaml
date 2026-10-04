@@ -1,0 +1,8 @@
+# Власник: Крістіна (#42) — заміни заготовку повною документацією (зразок: locations.yaml)
+openapi: 3.0.3
+info:
+  title: Greenway — Auth
+  version: 1.0.0
+servers:
+  - url: /
+paths: {}

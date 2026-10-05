@@ -3,9 +3,11 @@
 REST API для застосунку-каталогу природних локацій України: авторизація, профілі, локації, категорії, відгуки.
 
 ## Технології
+
 Node.js · Express · helmet · MongoDB (Mongoose) · celebrate/Joi · bcrypt · cookie-based sessions · multer + Cloudinary · pino
 
 ## Запуск локально
+
 ```bash
 npm install
 cp .env.template .env  # заповнити MONGO_URL та інші змінні
@@ -15,16 +17,18 @@ npm run dev            # http://localhost:4000/api/health
 Якщо на Windows `mongodb+srv` завершується з `querySrv ECONNREFUSED`, а `node -e "console.log(require('node:dns').getServers())"` показує `127.0.0.1`, задай `MONGO_DNS_SERVER=1.1.1.1` у `.env`. Ця змінна перевизначає DNS-сервер лише для процесу Node.js; без неї використовується системне налаштування.
 
 ## Скрипти
-| Команда | Що робить |
-|---|---|
-| `npm run dev` | запуск з nodemon |
-| `npm start` | продакшн-запуск |
-| `npm run lint` | перевірка ESLint |
-| `npm run format` | форматування Prettier |
-| `npm run seed` | наповнення БД початковими даними з ТЗ |
+
+| Команда             | Що робить                                         |
+| ------------------- | ------------------------------------------------- |
+| `npm run dev`       | запуск з nodemon                                  |
+| `npm start`         | продакшн-запуск                                   |
+| `npm run lint`      | перевірка ESLint                                  |
+| `npm run format`    | форматування Prettier                             |
+| `npm run seed`      | наповнення БД початковими даними з ТЗ             |
 | `npm run seed:user` | тестовий користувач test@greenway.dev / Test12345 |
 
 ## Структура
+
 ```
 src/
   server.js          # точка входу: middleware, роутери, запуск
@@ -39,6 +43,7 @@ src/
 ```
 
 ## API
+
 Повний контракт: [docs/API_CONTRACT.md](docs/API_CONTRACT.md) · Задачі: [docs/BACKEND_TASKS.md](docs/BACKEND_TASKS.md) · Модулі фронту: [docs/FRONTEND_MODULES.md](docs/FRONTEND_MODULES.md)
 
 ### Swagger UI
@@ -46,16 +51,22 @@ src/
 Після отримання змін спочатку виконай `npm install`, щоб встановити нові пакети. Переконайся, що MongoDB запущена й `MONGO_URL` задано в `.env`, потім запусти сервер командою `npm run dev`. Документація `GET /api/locations` буде доступна за адресою http://localhost:4000/docs/. Специфікація: [docs/openapi/locations.yaml](docs/openapi/locations.yaml).
 
 ## Seed
+
 Завантаж 5 файлів `relax_map_db.*.json` з папки ТЗ у `src/db/seeds/`, перейменуй на `regions.json`, `location_types.json`, `users.json`, `feedbacks.json`, `locations.json` і виконай `npm run seed` (`-- --force` — перезалити).
 
+Команда `npm run seed:coords` додає координати з `src/db/seeds/locations.json` лише до документів із точним збігом `name`, у яких поле `coordinates` відсутнє. Наявне поле (навіть `null`, порожнє або неповне) не змінюється; повторний запуск не переписує координати. На production виконувати лише після схвалення тімліда. Перед запуском перевірте цільову БД у `MONGO_URL` і достовірність seed-координат.
+
 ## Git workflow
+
 - `main` захищена: тільки через Pull Request + 1 approve від тімліда.
 - Одна задача = одна гілка: `backend/<task-name>` (наприклад `backend/auth-register`).
 - Перед PR: `git checkout main` → `git pull` → `git checkout <твоя-гілка>` → `git merge main` → вирішити конфлікти → `npm run lint` → перевірка в Postman → `git push`.
 - Наприкінці проєкту всі гілки, крім `main`, видаляються (TECH-критерій №18).
 
 ## Команда
+
 _Заповнити наприкінці проєкту: учасник — роль — задачі._
 
 ## Деплой
+
 _Посилання на Render — додати після першого деплою._

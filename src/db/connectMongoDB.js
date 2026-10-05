@@ -1,7 +1,7 @@
 import dns from 'node:dns';
 import mongoose from 'mongoose';
 
-export const connectMongoDB = async () => {
+export const connectMongoDB = async ({ throwOnError = false } = {}) => {
   try {
     if (process.env.MONGO_DNS_SERVER) {
       dns.setServers([process.env.MONGO_DNS_SERVER]);
@@ -10,6 +10,7 @@ export const connectMongoDB = async () => {
     await mongoose.connect(process.env.MONGO_URL);
     console.log('✅ MongoDB connection established successfully');
   } catch (error) {
+    if (throwOnError) throw error;
     console.error('❌ Failed to connect to MongoDB:', error.message);
     process.exit(1);
   }

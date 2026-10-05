@@ -8,41 +8,61 @@ paths:
   /api/feedbacks:
     get:
       summary: Отримання списку відгуків
-      description: Повертає список відгуків із можливістю пагінації (limit) та розширення зв'язків (populate).
+      description: Повертає список відгуків із можливістю пагінації (page, limit).
       parameters:
-        - name: limit
+        - name: page
           in: query
-          description: Обмеження кількості результатів
+          description: Номер сторінки результатів
           required: false
           schema:
             type: integer
             minimum: 1
-            example: 10
-        - name: populate
+            default: 1
+            example: 1
+        - name: limit
           in: query
-          description: Розширення зв'язків у базі даних
+          description: Обмеження кількості результатів на сторінці
           required: false
           schema:
-            type: string
-            enum: [locationId]
-            example: locationId
+            type: integer
+            minimum: 1
+            default: 6
+            example: 6
       responses:
         '200':
-          description: Успішне отримання списку відгуків
+          description: Успішне отримання списку відгуків з пагінацією
           content:
             application/json:
               schema:
                 type: object
                 required:
-                  - data
+                  - page
+                  - limit
+                  - totalItems
+                  - totalPages
+                  - items
                 properties:
-                  data:
+                  page:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 6
+                  totalItems:
+                    type: integer
+                    example: 24
+                  totalPages:
+                    type: integer
+                    example: 4
+                  items:
                     type: array
                     items:
                       $ref: '#/components/schemas/FeedbackResponse'
     post:
       summary: Створення нового відгуку
-      description: Додає новий відгук, прив'язує його до локації, автоматично підтягує ім'я користувача з сесії та перераховує середній рейтинг локації.
+      description: Додає новий відгук, прив'язує його до локації, автоматично підтягує ім'я користувача з сесії та перераховує середній рейтинг локації. (Приватний)
+      security:
+        - cookieAuth: []
       requestBody:
         required: true
         content:
@@ -59,33 +79,51 @@ paths:
                   description: Ідентифікатор локації (MongoDB ObjectId)
                   example: "64f1a2b3c4d5e6f7a8b9c0d2"
                 rate:
-                  type: integer
+                  type: number
+                  format: float
                   description: Оцінка від 1 до 5
                   minimum: 1
                   maximum: 5
-                  example: 5
+                  example: 4.5
                 description:
                   type: string
                   description: Текст відгуку (від 1 до 200 символів)
                   minLength: 1
                   maxLength: 200
                   example: "Чудове місце для відпочинку всією родиною!"
-                private:
-                  type: boolean
-                  description: Статус приватності відгуку
-                  example: false
       responses:
         '201':
           description: Відгук успішно створено
           content:
             application/json:
               schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+        '400':
+          description: Некоректні вхідні дані
+          content:
+            application/json:
+              schema:
                 type: object
-                required:
-                  - data
                 properties:
-                  data:
-                    $ref: '#/components/schemas/FeedbackResponse'
+                  status:
+                    type: integer
+                    example: 400
+                  message:
+                    type: string
+                    example: "Validation error: description is required"
+        '401':
+          description: Неавторизований доступ (відсутня або недійсна кука сесії)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 401
+                  message:
+                    type: string
+                    example: "Unauthorized"
         '404':
           description: Локацію з вказаним locationId не знайдено
           content:
@@ -101,6 +139,11 @@ paths:
                     example: "Location not found"
 
 components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid
   schemas:
     FeedbackResponse:
       type: object
@@ -109,6 +152,7 @@ components:
         - rate
         - description
         - userName
+        - locationId
         - createdAt
         - updatedAt
       properties:
@@ -117,10 +161,11 @@ components:
           description: Системний ідентифікатор відгуку в MongoDB
           example: "64f1a2b3c4d5e6f7a8b9c0d1"
         rate:
-          type: integer
+          type: number
+          format: float
           minimum: 1
           maximum: 5
-          example: 5
+          example: 4.5
         description:
           type: string
           minLength: 1
@@ -133,12 +178,18 @@ components:
           description: Ім'я користувача (автоматично підтягується з req.user.name)
           example: "Вікторія"
         locationId:
-          type: string
-          description: Ідентифікатор локації (може бути відсутній у seed-відгуків)
-          example: "64f1a2b3c4d5e6f7a8b9c0d2"
-        private:
-          type: boolean
-          example: false
+          type: object
+          required:
+            - _id
+            - name
+          properties:
+            _id:
+              type: string
+              example: "64f1a2b3c4d5e6f7a8b9c0d2"
+            name:
+              type: string
+              example: "Парк ім. Шевченка"
+          description: Об'єкт локації
         createdAt:
           type: string
           format: date-time

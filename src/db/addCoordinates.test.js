@@ -1,4 +1,4 @@
-﻿import assert from 'node:assert/strict';
+import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import fs from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
@@ -23,7 +23,12 @@ test('CLI exits non-zero with no database URL and does not expose secrets', () =
 });
 const collectionFor = (docs, beforeUpdate = () => {}) => ({
   async updateMany(filter, update, options) {
-    assert.deepEqual(filter.coordinates, { $exists: false });
+    assert.deepEqual(filter.coordinates, { $exists: Boolean(filter.$or) });
+    if (filter.$or)
+      assert.deepEqual(filter.$or, [
+        { 'coordinates.lat': { $ne: update.$set.coordinates.lat } },
+        { 'coordinates.lon': { $ne: update.$set.coordinates.lon } },
+      ]);
     assert.deepEqual(Object.keys(update), ['$set']);
     assert.deepEqual(Object.keys(update.$set), ['coordinates']);
     assert.deepEqual(options, {
@@ -33,7 +38,14 @@ const collectionFor = (docs, beforeUpdate = () => {}) => ({
     beforeUpdate();
     let modifiedCount = 0;
     for (const doc of docs) {
-      if (doc.name === filter.name && !Object.hasOwn(doc, 'coordinates')) {
+      if (
+        doc.name === filter.name &&
+        (filter.$or
+          ? Object.hasOwn(doc, 'coordinates') &&
+            (doc.coordinates?.lat !== update.$set.coordinates.lat ||
+              doc.coordinates?.lon !== update.$set.coordinates.lon)
+          : !Object.hasOwn(doc, 'coordinates'))
+      ) {
         doc.coordinates = structuredClone(update.$set.coordinates);
         modifiedCount++;
       }
@@ -52,10 +64,10 @@ test('updates missing coordinates, preserves other fields and is idempotent with
     { name: 'Place', coordinates: { lat: 0, lon: 0 } },
   ];
   const collection = collectionFor(docs);
-  assert.equal((await backfillCoordinates(collection, seeds)).updated, 2);
+  assert.equal((await backfillCoordinates(collection, seeds)).added, 2);
   assert.deepEqual(docs[0], { name: 'Place', region: 'region', coordinates });
   const snapshot = structuredClone(docs);
-  assert.equal((await backfillCoordinates(collection, seeds)).updated, 0);
+  assert.equal((await backfillCoordinates(collection, seeds)).added, 0);
   assert.deepEqual(docs, snapshot);
 });
 
@@ -70,8 +82,10 @@ test('preserves existing, null, empty and partial coordinates', async () => {
       { name: 'Place', coordinates },
     ]),
     {
+      added: 0,
       updated: 0,
-      existing: 4,
+      unchanged: 0,
+      skipped: 4,
       notFound: 0,
       invalid: 0,
     },
@@ -115,7 +129,7 @@ test('skips invalid coordinates and accepts geographic boundaries', async () => 
   );
   const summary = await backfillCoordinates(collectionFor(docs), seeds);
   assert.equal(summary.invalid, 12);
-  assert.equal(summary.updated, 2);
+  assert.equal(summary.added, 2);
 });
 
 test('atomic predicate protects coordinates written by another process', async () => {
@@ -126,7 +140,7 @@ test('atomic predicate protects coordinates written by another process', async (
   });
   assert.equal(
     (await backfillCoordinates(collection, [{ name: 'Place', coordinates }]))
-      .updated,
+      .added,
     0,
   );
   assert.deepEqual(docs[0].coordinates, existing);
@@ -176,7 +190,7 @@ test('successful run closes the connection and reports summary', async () => {
     true,
   );
   assert.equal(closed, true);
-  assert.match(summary, /Оновлено: 1/);
+  assert.match(summary, /Додано: 1/);
 });
 
 test('all 90 seeds have finite coordinates in valid ranges', async () => {
@@ -195,4 +209,84 @@ test('all 90 seeds have finite coordinates in valid ranges', async () => {
       Number.isFinite(value.lon) && value.lon >= -180 && value.lon <= 180,
     );
   }
+});
+
+for (const value of [
+  { lat: 1, lon: 2 },
+  { lat: 48.1, lon: 2 },
+  { lat: 1, lon: 24.5 },
+  null,
+  {},
+  { lat: 1 },
+]) {
+  test(
+    'force replaces differing coordinates ' + JSON.stringify(value),
+    async () => {
+      const doc = {
+        name: 'Place',
+        region: 'region',
+        description: 'description',
+        rate: 4,
+        coordinates: value,
+      };
+      const expected = { ...structuredClone(doc), coordinates };
+      const summary = await backfillCoordinates(
+        collectionFor([doc]),
+        [{ name: 'Place', coordinates }],
+        { force: true },
+      );
+      assert.equal(summary.updated, 1);
+      assert.equal(summary.added, 0);
+      assert.deepEqual(doc, expected);
+    },
+  );
+}
+test('force adds missing coordinates and preserves identical coordinates on repeated runs', async () => {
+  const docs = [
+    { name: 'Place', region: 'region' },
+    { name: 'Place', coordinates },
+  ];
+  const collection = collectionFor(docs);
+  const seeds = [{ name: 'Place', coordinates }];
+  assert.deepEqual(
+    await backfillCoordinates(collection, seeds, { force: true }),
+    {
+      added: 1,
+      updated: 0,
+      unchanged: 1,
+      skipped: 0,
+      notFound: 0,
+      invalid: 0,
+    },
+  );
+  assert.deepEqual(docs[0], { name: 'Place', region: 'region', coordinates });
+  assert.equal(docs[1].coordinates, coordinates);
+  const snapshot = structuredClone(docs);
+  const summary = await backfillCoordinates(collection, seeds, { force: true });
+  assert.equal(docs[1].coordinates, coordinates);
+  assert.equal(summary.unchanged, 2);
+  assert.equal(summary.updated, 0);
+  assert.equal(summary.added, 0);
+  assert.deepEqual(docs, snapshot);
+});
+test('runBackfill passes force and reports updated and unchanged records', async () => {
+  const docs = [
+    { name: 'Place', coordinates: { lat: 1, lon: 2 } },
+    { name: 'Place', coordinates },
+  ];
+  let summary;
+  assert.equal(
+    await runBackfill({
+      force: true,
+      connect: async () => {},
+      disconnect: async () => {},
+      readSeeds: async () => [{ name: 'Place', coordinates }],
+      getCollection: () => collectionFor(docs),
+      log: (value) => {
+        summary = value;
+      },
+    }),
+    true,
+  );
+  assert.match(summary, /оновлено: 1; без змін: 1/);
 });

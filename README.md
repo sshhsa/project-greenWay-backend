@@ -54,7 +54,11 @@ src/
 
 Завантаж 5 файлів `relax_map_db.*.json` з папки ТЗ у `src/db/seeds/`, перейменуй на `regions.json`, `location_types.json`, `users.json`, `feedbacks.json`, `locations.json` і виконай `npm run seed` (`-- --force` — перезалити).
 
-Команда `npm run seed:coords` додає координати з `src/db/seeds/locations.json` лише до документів із точним збігом `name`, у яких поле `coordinates` відсутнє. Наявне поле (навіть `null`, порожнє або неповне) не змінюється; повторний запуск не переписує координати. На production виконувати лише після схвалення тімліда. Перед запуском перевірте цільову БД у `MONGO_URL` і достовірність seed-координат.
+### Координати локацій
+
+`node src/db/addCoordinates.js` — додає координати з seed лише коли поле `coordinates` відсутнє.
+
+`node src/db/addCoordinates.js --force` — синхронізує відсутні або відмінні координати з seed за точним збігом `name`.
 
 ## Git workflow
 

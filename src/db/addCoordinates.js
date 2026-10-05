@@ -1,12 +1,23 @@
-﻿import 'dotenv/config';
+import 'dotenv/config';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import mongoose from 'mongoose';
 import { connectMongoDB } from './connectMongoDB.js';
 
-export const backfillCoordinates = async (collection, seeds) => {
-  const summary = { updated: 0, existing: 0, notFound: 0, invalid: 0 };
+export const backfillCoordinates = async (
+  collection,
+  seeds,
+  { force = false } = {},
+) => {
+  const summary = {
+    added: 0,
+    updated: 0,
+    unchanged: 0,
+    skipped: 0,
+    notFound: 0,
+    invalid: 0,
+  };
   for (const seed of seeds) {
     const { name, coordinates } = seed ?? {};
     if (
@@ -30,13 +41,38 @@ export const backfillCoordinates = async (collection, seeds) => {
         },
         { collation: { locale: 'simple' }, upsert: false },
       );
-      summary.updated += result.modifiedCount;
+      summary.added += result.modifiedCount;
+      let updated = 0;
+      if (force) {
+        const result = await collection.updateMany(
+          {
+            name,
+            coordinates: { $exists: true },
+            $or: [
+              { 'coordinates.lat': { $ne: coordinates.lat } },
+              { 'coordinates.lon': { $ne: coordinates.lon } },
+            ],
+          },
+          {
+            $set: {
+              coordinates: { lat: coordinates.lat, lon: coordinates.lon },
+            },
+          },
+          { collation: { locale: 'simple' }, upsert: false },
+        );
+        updated = result.modifiedCount;
+        summary.updated += updated;
+      }
       const existing = await collection.countDocuments(
         { name },
         { collation: { locale: 'simple' } },
       );
       if (existing === 0) summary.notFound++;
-      else summary.existing += Math.max(0, existing - result.modifiedCount);
+      else
+        summary[force ? 'unchanged' : 'skipped'] += Math.max(
+          0,
+          existing - result.modifiedCount - updated,
+        );
     } catch (error) {
       throw new Error(`Не вдалося оновити локацію ${JSON.stringify(name)}`, {
         cause: error,
@@ -47,6 +83,7 @@ export const backfillCoordinates = async (collection, seeds) => {
 };
 
 export const runBackfill = async ({
+  force = false,
   connect = () => connectMongoDB({ throwOnError: true }),
   disconnect = () => mongoose.disconnect(),
   readSeeds = async () =>
@@ -67,9 +104,11 @@ export const runBackfill = async ({
     stage = 'підключення до БД';
     await connect();
     stage = 'оновлення координат';
-    const summary = await backfillCoordinates(getCollection(), seeds);
+    const summary = await backfillCoordinates(getCollection(), seeds, {
+      force,
+    });
     log(
-      `Оновлено: ${summary.updated}; вже мають координати: ${summary.existing}; не знайдено: ${summary.notFound}; невалідні seed: ${summary.invalid}`,
+      `Додано: ${summary.added}; оновлено: ${summary.updated}; без змін: ${summary.unchanged}; пропущено з координатами: ${summary.skipped}; не знайдено: ${summary.notFound}; невалідні seed: ${summary.invalid}`,
     );
     return true;
   } catch (error) {
@@ -98,5 +137,6 @@ if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href
 ) {
-  if (!(await runBackfill())) process.exitCode = 1;
+  if (!(await runBackfill({ force: process.argv.includes('--force') })))
+    process.exitCode = 1;
 }

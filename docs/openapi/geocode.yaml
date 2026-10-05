@@ -1,8 +1,182 @@
-# Власник: Геннадій (#45) — заміни заготовку повною документацією (зразок: locations.yaml)
 openapi: 3.0.3
 info:
   title: Greenway — Geocode
   version: 1.0.0
+  description: Пошук місць та визначення назви місця за координатами.
+
 servers:
   - url: /
-paths: {}
+    description: Той самий сервер, що віддає документацію
+
+tags:
+  - name: Geocode
+    description: Пошук місць та геокодування
+
+paths:
+  /api/geocode/search:
+    get:
+      tags:
+        - Geocode
+      operationId: searchPlaces
+      summary: Пошук місця за назвою
+      description: >-
+        Виконує пошук місць за назвою лише в Україні.
+        Повертає до 5 результатів із назвою та координатами.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Назва або частина назви місця для пошуку.
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 120
+          example: Харків
+      responses:
+        '200':
+          description: Список знайдених місць.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+              example:
+                data:
+                  - name: Харків, Харківська область, Україна
+                    lat: 49.9935
+                    lon: 36.2304
+        '400':
+          description: Некоректний параметр q.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              example:
+                status: 400
+                message: '"q" is required'
+        '502':
+          description: Сервіс геокодування недоступний.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              example:
+                status: 502
+                message: Geocoding service is unavailable
+
+  /api/geocode/reverse:
+    get:
+      tags:
+        - Geocode
+      operationId: reversePlace
+      summary: Визначити назву місця за координатами
+      description: >-
+        Виконує зворотне геокодування за широтою та довготою.
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          description: Географічна широта.
+          schema:
+            type: number
+            minimum: -90
+            maximum: 90
+          example: 49.9935
+        - name: lon
+          in: query
+          required: true
+          description: Географічна довгота.
+          schema:
+            type: number
+            minimum: -180
+            maximum: 180
+          example: 36.2304
+      responses:
+        '200':
+          description: Назва місця та координати.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReverseResponse'
+              example:
+                data:
+                  name: Харків, Харківська область, Україна
+                  lat: 49.9935
+                  lon: 36.2304
+        '400':
+          description: Некоректні параметри lat або lon.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              example:
+                status: 400
+                message: '"lat" must be a number'
+        '502':
+          description: Сервіс геокодування недоступний.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              example:
+                status: 502
+                message: Geocoding service is unavailable
+
+components:
+  schemas:
+    SearchResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/GeocodeResult'
+
+    ReverseResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/ReverseResult'
+
+    GeocodeResult:
+      type: object
+      required:
+        - name
+        - lat
+        - lon
+      properties:
+        name:
+          type: string
+        lat:
+          type: number
+        lon:
+          type: number
+
+    ReverseResult:
+      type: object
+      required:
+        - name
+        - lat
+        - lon
+      properties:
+        name:
+          type: string
+        lat:
+          type: number
+        lon:
+          type: number
+
+    ApiError:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: integer
+        message:
+          type: string

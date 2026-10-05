@@ -1,8 +1,247 @@
-# Власник: Олександр (#42) — заміни заготовку повною документацією (зразок: locations.yaml)
 openapi: 3.0.3
 info:
   title: Greenway — Auth
   version: 1.0.0
+  description: >-
+    Реєстрація, вхід, вихід і оновлення сесії. Сесія живе в httpOnly cookies:
+    accessToken (15 хв), refreshToken і sessionId (1 доба).
+    У production cookies мають secure + sameSite=none.
 servers:
   - url: /
-paths: {}
+tags:
+  - name: Auth
+    description: Авторизація через cookie-сесію
+paths:
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      operationId: registerUser
+      summary: Реєстрація нового користувача
+      description: Створює користувача і одразу відкриває сесію (встановлює cookies).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Користувача створено, cookies встановлено
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/SessionCookies'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: Email вже зайнятий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example: { status: 409, message: Email in use }
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      operationId: loginUser
+      summary: Вхід
+      description: >-
+        Перевіряє email і пароль, відкриває нову сесію (cookies).
+        Попередні сесії цього користувача видаляються.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Успішний вхід, cookies встановлено
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/SessionCookies'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          description: Невірний email або пароль
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example: { status: 401, message: Invalid email or password }
+
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logoutUser
+      summary: Вихід
+      description: Видаляє поточну сесію і очищає cookies.
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Сесію закрито, cookies очищено
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refreshSession
+      summary: Оновлення сесії
+      description: >-
+        За cookies sessionId + refreshToken видаляє стару сесію
+        і створює нову (нові cookies).
+      security:
+        - refreshCookie: []
+      responses:
+        '200':
+          description: Сесію оновлено, нові cookies встановлено
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/SessionCookies'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Session refreshed
+        '401':
+          description: Немає cookies, сесію не знайдено або вона прострочена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missing:
+                  value: { status: 401, message: Missing session credentials }
+                notFound:
+                  value: { status: 401, message: Session not found }
+                expired:
+                  value: { status: 401, message: Session expired }
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: accessToken
+      description: Разом з accessToken браузер шле й sessionId
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: refreshToken
+      description: Разом з refreshToken браузер шле й sessionId
+
+  headers:
+    SessionCookies:
+      description: accessToken, refreshToken, sessionId (httpOnly)
+      schema:
+        type: string
+        example: accessToken=...; Path=/; HttpOnly; SameSite=None; Secure
+
+  responses:
+    ValidationError:
+      description: Помилка валідації тіла запиту
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: { status: 400, message: '"email" must be a valid email' }
+    Unauthorized:
+      description: Немає валідної сесії
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: { status: 401, message: Session not found }
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 32
+          example: Олександр
+        email:
+          type: string
+          format: email
+          maxLength: 64
+          example: test@greenway.dev
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 128
+          example: Test12345
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: test@greenway.dev
+        password:
+          type: string
+          format: password
+          example: Test12345
+
+    User:
+      type: object
+      required: [_id, name, email]
+      properties:
+        _id:
+          type: string
+          example: 6881563901add19ee16fcff5
+        name:
+          type: string
+          example: Олександр
+        email:
+          type: string
+          format: email
+          example: test@greenway.dev
+        avatarUrl:
+          type: string
+          description: Порожній рядок, якщо аватара немає
+          example: ''
+        articlesAmount:
+          type: integer
+          example: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UserResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/User'
+
+    Error:
+      type: object
+      properties:
+        status:
+          type: integer
+        message:
+          type: string

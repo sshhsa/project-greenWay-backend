@@ -1,8 +1,212 @@
-# Власник: Олександр (#42) — заміни заготовку повною документацією (зразок: locations.yaml)
 openapi: 3.0.3
 info:
   title: Greenway — Users
   version: 1.0.0
+  description: Поточний користувач, редагування профілю, публічні профілі та їхні локації.
 servers:
   - url: /
-paths: {}
+tags:
+  - name: Users
+    description: Профілі користувачів
+paths:
+  /api/users/me:
+    get:
+      tags: [Users]
+      operationId: getCurrentUser
+      summary: Поточний користувач
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Дані користувача поточної сесії
+          content:
+            application/json:
+              schema:
+                $ref: './auth.yaml#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    patch:
+      tags: [Users]
+      operationId: updateCurrentUser
+      summary: Редагування профілю (додаткове завдання)
+      description: >-
+        multipart/form-data. Можна передати name, avatar або обидва.
+        Порожній запит → 400. Аватар завантажується в Cloudinary.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 32
+                  example: Олександр
+                avatar:
+                  type: string
+                  format: binary
+                  description: jpg або png, менше 1MB
+      responses:
+        '200':
+          description: Оновлений користувач
+          content:
+            application/json:
+              schema:
+                $ref: './auth.yaml#/components/schemas/UserResponse'
+        '400':
+          description: Невалідне ім'я, файл не jpg/png або більше 1MB, або нічого оновлювати
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                empty:
+                  value:
+                    {
+                      status: 400,
+                      message: 'Nothing to update: provide name and/or avatar',
+                    }
+                fileType:
+                  value:
+                    { status: 400, message: Only jpg/png images are allowed }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/users/{userId}:
+    get:
+      tags: [Users]
+      operationId: getUserById
+      summary: Публічний профіль користувача
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: Публічні поля користувача (без email)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PublicUser'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          description: Користувача не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example: { status: 404, message: User not found }
+
+  /api/users/{userId}/locations:
+    get:
+      tags: [Users]
+      operationId: getUserLocations
+      summary: Локації користувача (з пагінацією)
+      description: Від нових до старих (createdAt desc).
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        '200':
+          description: Сторінка локацій
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [page, limit, totalItems, totalPages, items]
+                properties:
+                  page:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 6
+                  totalItems:
+                    type: integer
+                    example: 14
+                  totalPages:
+                    type: integer
+                    example: 3
+                  items:
+                    type: array
+                    items:
+                      $ref: './locations.yaml#/components/schemas/LocationListItem'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: accessToken
+      description: Разом з accessToken браузер шле й sessionId
+
+  parameters:
+    UserId:
+      name: userId
+      in: path
+      required: true
+      description: MongoDB ObjectId користувача
+      schema:
+        type: string
+        example: 6881563901add19ee16fcff5
+
+  responses:
+    Unauthorized:
+      description: Немає валідної сесії
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: { status: 401, message: Session not found }
+    InvalidId:
+      description: userId не є валідним ObjectId
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: { status: 400, message: Invalid userId }
+
+  schemas:
+    PublicUser:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 6881563901add19ee16fcff5
+        name:
+          type: string
+          example: Дмитро Романенко
+        avatarUrl:
+          type: string
+          example: ''
+        articlesAmount:
+          type: integer
+          example: 5
+
+    Error:
+      type: object
+      properties:
+        status:
+          type: integer
+        message:
+          type: string

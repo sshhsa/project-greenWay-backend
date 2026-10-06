@@ -1,14 +1,17 @@
 openapi: 3.0.3
+
 info:
   title: Greenway — каталог місць відпочинку
   version: 1.0.0
-  description: Документація лише для публічного ендпоінта GET /api/locations.
+  description: Документація API для роботи з локаціями.
+
 servers:
   - url: /
-    description: Той самий сервер, що віддає документацію
+
 tags:
   - name: Locations
     description: Каталог місць відпочинку
+
 paths:
   /api/locations:
     get:
@@ -20,6 +23,7 @@ paths:
         Повертає сторінку локацій. Фільтри та пошук можна поєднувати.
         Пошук виконується за назвою без урахування регістру.
         Без параметра sort використовується поточний порядок колекції.
+
       parameters:
         - name: page
           in: query
@@ -29,6 +33,7 @@ paths:
             minimum: 1
             default: 1
           example: 1
+
         - name: limit
           in: query
           description: Кількість локацій на сторінці.
@@ -38,6 +43,7 @@ paths:
             maximum: 50
             default: 10
           example: 10
+
         - name: region
           in: query
           description: Slug регіону.
@@ -46,6 +52,7 @@ paths:
             minLength: 1
             maxLength: 96
           example: odeshchyna
+
         - name: type
           in: query
           description: Slug типу локації.
@@ -54,6 +61,7 @@ paths:
             minLength: 1
             maxLength: 96
           example: more
+
         - name: search
           in: query
           description: Частина назви локації.
@@ -61,6 +69,7 @@ paths:
             type: string
             maxLength: 96
           example: Вертеба
+
         - name: sort
           in: query
           description: >-
@@ -74,6 +83,7 @@ paths:
               - rating
               - '-rating'
           example: '-rating'
+
       responses:
         '200':
           description: Сторінка локацій.
@@ -101,6 +111,7 @@ paths:
                     feedbacksId:
                       - 65f1a2b3c4d5e6f7a8b9c001
                       - 65f1a2b3c4d5e6f7a8b9c002
+
         '400':
           description: Некоректні query-параметри.
           content:
@@ -110,16 +121,365 @@ paths:
               example:
                 status: 400
                 message: '"sort" must be one of [name, -name, rating, -rating]'
+
         '500':
-          description: Внутрішня помилка сервера.
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Locations
+      operationId: createLocation
+      summary: Створити нову локацію
+      description: >-
+        Створює нову локацію для авторизованого користувача.
+        Зображення завантажується у Cloudinary.
+
+      security:
+        - cookieAuth: []
+
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - name
+                - locationType
+                - region
+                - description
+                - image
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  maxLength: 96
+                  example: Сонячна Рів'єра
+
+                locationType:
+                  type: string
+                  maxLength: 64
+                  description: Slug типу локації.
+                  example: more
+
+                region:
+                  type: string
+                  maxLength: 64
+                  description: Slug регіону.
+                  example: odeshchyna
+
+                description:
+                  type: string
+                  minLength: 20
+                  maxLength: 6000
+                  example: Мальовниче місце для відпочинку на узбережжі моря.
+
+                coordinates:
+                  type: object
+                  description: Координати локації.
+                  required:
+                    - lat
+                    - lon
+                  properties:
+                    lat:
+                      type: number
+                      minimum: -90
+                      maximum: 90
+                      example: 46.0263
+                    lon:
+                      type: number
+                      minimum: -180
+                      maximum: 180
+                      example: 30.4577
+
+                image:
+                  type: string
+                  format: binary
+                  description: Зображення локації.
+
+      responses:
+        '201':
+          description: Локацію успішно створено.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationResponse'
+
+        '400':
+          description: Некоректні дані або відсутнє зображення.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                validation:
+                  value:
+                    status: 400
+                    message: '"name" length must be at least 3 characters long'
+                imageRequired:
+                  value:
+                    status: 400
+                    message: Image is required
+                invalidCoordinates:
+                  value:
+                    status: 400
+                    message: Invalid coordinates format. Expected JSON.
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/locations/popular:
+    get:
+      tags:
+        - Locations
+      operationId: getPopularLocations
+      summary: Отримати популярні локації
+      description: >-
+        Повертає список локацій, відсортованих за рейтингом
+        від найвищого до найнижчого.
+
+      parameters:
+        - name: limit
+          in: query
+          description: Кількість популярних локацій.
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 6
+          example: 6
+
+      responses:
+        '200':
+          description: Список популярних локацій.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LocationListItem'
+
+        '400':
+          description: Некоректний параметр limit.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiError'
               example:
-                status: 500
-                message: Internal server error
+                status: 400
+                message: '"limit" must be less than or equal to 20'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/locations/{locationId}:
+    get:
+      tags:
+        - Locations
+      operationId: getLocationById
+      summary: Отримати локацію за ID
+      description: >-
+        Повертає одну локацію за її ID разом з даними автора
+        та відгуками.
+
+      parameters:
+        - $ref: '#/components/parameters/LocationId'
+
+      responses:
+        '200':
+          description: Дані локації.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationDetailsResponse'
+
+        '400':
+          description: Некоректний MongoDB ObjectId.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+        '404':
+          description: Локацію не знайдено.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              example:
+                status: 404
+                message: Location not found
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      tags:
+        - Locations
+      operationId: updateLocation
+      summary: Редагувати локацію
+      description: >-
+        Оновлює локацію. Редагувати локацію може лише її власник.
+        Потрібно передати щонайменше одне поле або нове зображення.
+
+      security:
+        - cookieAuth: []
+
+      parameters:
+        - $ref: '#/components/parameters/LocationId'
+
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  maxLength: 96
+                  example: Оновлена назва локації
+
+                locationType:
+                  type: string
+                  maxLength: 64
+                  description: Slug типу локації.
+                  example: more
+
+                region:
+                  type: string
+                  maxLength: 64
+                  description: Slug регіону.
+                  example: odeshchyna
+
+                description:
+                  type: string
+                  minLength: 20
+                  maxLength: 6000
+                  example: Оновлений опис місця для відпочинку.
+
+                coordinates:
+                  type: object
+                  description: Координати локації.
+                  required:
+                    - lat
+                    - lon
+                  properties:
+                    lat:
+                      type: number
+                      minimum: -90
+                      maximum: 90
+                      example: 46.0263
+                    lon:
+                      type: number
+                      minimum: -180
+                      maximum: 180
+                      example: 30.4577
+
+                image:
+                  type: string
+                  format: binary
+                  description: Нове зображення локації.
+
+      responses:
+        '200':
+          description: Локацію успішно оновлено.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationResponse'
+
+        '400':
+          description: Некоректні дані або не передано жодного поля для оновлення.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              examples:
+                noFields:
+                  value:
+                    status: 400
+                    message: At least one field or image must be provided
+                invalidCoordinates:
+                  value:
+                    status: 400
+                    message: Invalid coordinates format. Expected JSON.
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+        '403':
+          description: Користувач не є власником цієї локації.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              example:
+                status: 403
+                message: 'Forbidden: You can update only your own location'
+
+        '404':
+          description: Локацію не знайдено.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+              example:
+                status: 404
+                message: Location not found
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: accessToken
+      description: Разом з accessToken браузер надсилає sessionId.
+
+  parameters:
+    LocationId:
+      name: locationId
+      in: path
+      required: true
+      description: MongoDB ObjectId локації.
+      schema:
+        type: string
+      example: 68d568270e6bcc357e9833e8
+
+  responses:
+    Unauthorized:
+      description: Немає валідної сесії.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          example:
+            status: 401
+            message: Session not found
+
+    InternalServerError:
+      description: Внутрішня помилка сервера.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          example:
+            status: 500
+            message: Internal server error
+
   schemas:
     LocationsPage:
       type: object
@@ -133,23 +493,28 @@ components:
         page:
           type: integer
           minimum: 1
+
         limit:
           type: integer
           minimum: 1
           maximum: 50
+
         totalItems:
           type: integer
           minimum: 0
+
         totalPages:
           type: integer
           minimum: 0
+
         items:
           type: array
           items:
             $ref: '#/components/schemas/LocationListItem'
+
     LocationListItem:
       type: object
-      description: Поля документа Location, які зараз повертає каталог.
+      description: Поля документа Location, які повертає каталог.
       required:
         - _id
         - name
@@ -160,46 +525,167 @@ components:
         - description
         - ownerId
         - feedbacksId
+
       properties:
         _id:
           type: string
           description: MongoDB ObjectId локації.
+          example: 68d568270e6bcc357e9833e8
+
         image:
           type: string
           format: uri
+          example: https://ftp.goit.study/img/relax-map/68d568270e6bcc357e9833e8.webp
+
         name:
           type: string
+          example: Сонячна Рів'єра
+
         locationType:
           type: string
           description: Slug типу локації.
+          example: more
+
         region:
           type: string
           description: Slug регіону.
+          example: odeshchyna
+
         rate:
           type: number
           minimum: 0
           maximum: 5
+          example: 4.5
+
         description:
           type: string
+          example: Місце для відпочинку на узбережжі.
+
         coordinates:
-          type: object
-          description: Координати, якщо вони є в документі.
-          required:
-            - lat
-            - lon
-          properties:
-            lat:
-              type: number
-            lon:
-              type: number
+          $ref: '#/components/schemas/Coordinates'
+
         ownerId:
           type: string
           description: MongoDB ObjectId автора.
+          example: 6881563901add19ee16fcff5
+
         feedbacksId:
           type: array
           items:
             type: string
-            description: MongoDB ObjectId відгуку.
+          description: MongoDB ObjectId відгуків.
+
+    LocationDetails:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 68d568270e6bcc357e9833e8
+
+        image:
+          type: string
+          format: uri
+
+        name:
+          type: string
+
+        locationType:
+          type: string
+          description: Slug типу локації.
+
+        region:
+          type: string
+          description: Slug регіону.
+
+        rate:
+          type: number
+          minimum: 0
+          maximum: 5
+
+        description:
+          type: string
+
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+
+        ownerId:
+          $ref: '#/components/schemas/LocationOwner'
+
+        feedbacksId:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feedback'
+
+    Coordinates:
+      type: object
+      required:
+        - lat
+        - lon
+      properties:
+        lat:
+          type: number
+          minimum: -90
+          maximum: 90
+          example: 46.0263
+
+        lon:
+          type: number
+          minimum: -180
+          maximum: 180
+          example: 30.4577
+
+    LocationOwner:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 6881563901add19ee16fcff5
+
+        name:
+          type: string
+          example: Олександр
+
+        avatarUrl:
+          type: string
+          description: URL аватара користувача.
+          example: ''
+
+    Feedback:
+      type: object
+      properties:
+        _id:
+          type: string
+
+        rate:
+          type: number
+          minimum: 0
+          maximum: 5
+
+        description:
+          type: string
+
+        userName:
+          type: string
+
+        locationId:
+          type: string
+
+    LocationResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/LocationListItem'
+
+    LocationDetailsResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/LocationDetails'
+
     ApiError:
       type: object
       required:

@@ -26,6 +26,7 @@ npm run dev            # http://localhost:4000/api/health
 | `npm run format`    | форматування Prettier                             |
 | `npm run seed`      | наповнення БД початковими даними з ТЗ             |
 | `npm run seed:user` | тестовий користувач test@greenway.dev / Test12345 |
+| `npm run seed:coords` | координати локацій з seed (`-- --force` — перезаписати) |
 
 ## Структура
 
@@ -48,7 +49,7 @@ src/
 
 ### Swagger UI
 
-Після отримання змін спочатку виконай `npm install`, щоб встановити нові пакети. Переконайся, що MongoDB запущена й `MONGO_URL` задано в `.env`, потім запусти сервер командою `npm run dev`. Документація `GET /api/locations` буде доступна за адресою http://localhost:4000/docs/. Специфікація: [docs/openapi/locations.yaml](docs/openapi/locations.yaml).
+Документація всіх ендпоінтів: http://localhost:4000/docs/ (локально) або https://project-greenway-backend.onrender.com/docs/ — специфікацію обирай у дропдауні справа зверху (Locations, Auth, Users, Feedbacks, Categories, Geocode). Файли: [docs/openapi/](docs/openapi/).
 
 ## Seed
 
@@ -69,8 +70,24 @@ src/
 
 ## Команда
 
-_Заповнити наприкінці проєкту: учасник — роль — задачі._
+| Учасник | Роль | Бекенд | Фронтенд |
+|---|---|---|---|
+| Олександр ([@sshhsa](https://github.com/sshhsa)) | Team Lead | каркас, auth (register/login/logout/refresh), сесії, seed, geocode, swagger (auth, users), деплой | каркас, auth-сторінки, middleware, проксі `app/api`, модалка «Редагувати профіль», фікси та рев'ю |
+| Анастасія ([@Anastasiia-S100306](https://github.com/Anastasiia-S100306)) | Scrum Master | GET /users/:userId | Advantages, ProfileInfo |
+| Валерій ([@ValeriySolod](https://github.com/ValeriySolod)) | Developer | GET /users/me, останні відгуки, координати локацій | AuthPromptModal, MapView (Leaflet), LocationMap |
+| Катерина ([@kateryna-motylova](https://github.com/kateryna-motylova)) | Developer | GET /locations (фільтри, пагінація), Swagger UI | каталог локацій |
+| Мирослава ([@Myroslava-Morhental](https://github.com/Myroslava-Morhental)) | Developer | GET /locations/popular, swagger locations | PopularLocations, LatestFeedbacks, FeedbackSlider |
+| Крістіна ([@krystyna-arsenych](https://github.com/krystyna-arsenych)) | Developer | GET /locations/:locationId | LocationDetails, LocationFeedbacks |
+| Вікторія ([@victoriatarasenko1993-max](https://github.com/victoriatarasenko1993-max)) | Developer | POST /locations, Cloudinary, swagger feedbacks/categories | Hero, LocationForm, LocationSearch |
+| Артем ([@homichartem03-rgb](https://github.com/homichartem03-rgb)) | Developer | PATCH /locations/:locationId | LocationCard, редагування локації |
+| Геннадій ([@GennadiyTsekhmistro](https://github.com/GennadiyTsekhmistro)) | Developer | GET /categories, swagger geocode | UI kit, Modal, Pagination |
+| Анна ([@PavelkoAnna](https://github.com/PavelkoAnna)) | Developer | POST /feedbacks | StarRating, AddFeedbackModal, LocationPicker |
+| Назарій ([@Nazar-Lysak](https://github.com/Nazar-Lysak)) | Developer | GET /users/:userId/locations | UserLocations, пагінація профілю |
+| Маркіян ([@eture4ka](https://github.com/eture4ka)) | Developer | PATCH /users/me | EditProfileModal |
 
 ## Деплой
 
-_Посилання на Render — додати після першого деплою._
+- Фронтенд (Vercel): https://project-greenway-frontend.vercel.app
+- Бекенд (Render): https://project-greenway-backend.onrender.com/api
+- Swagger: https://project-greenway-backend.onrender.com/docs/
+- Репозиторії: [frontend](https://github.com/sshhsa/project-greenWay-frontend) · [backend](https://github.com/sshhsa/project-greenWay-backend)

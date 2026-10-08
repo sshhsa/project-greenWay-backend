@@ -1,20 +1,9 @@
-import { nominatimRequest } from '../../services/geocode/nominatim.js';
+import { searchPlacesService } from '../../services/geocode/geocoder.js';
 
 // GET /api/geocode/search?q= — public, EXTRA. Пошук місця за назвою (лише Україна).
 export const searchPlaces = async (req, res, next) => {
   try {
-    const results = await nominatimRequest('/search', {
-      q: req.query.q,
-      countrycodes: 'ua',
-      limit: 5,
-    });
-
-    const data = results.map(({ display_name, lat, lon }) => ({
-      name: display_name,
-      lat: Number(lat),
-      lon: Number(lon),
-    }));
-
+    const data = await searchPlacesService(req.query.q);
     res.status(200).json({ data });
   } catch (error) {
     next(error);
